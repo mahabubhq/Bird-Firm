@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>খামার হিসাব — এন্ট্রি ফর্ম</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22301c;
+    --forest:#2f5233;
+    --forest-dark:#1e3a22;
+    --wheat:#f6f1e4;
+    --wheat-soft:#efe8d6;
+    --paper:#fffdf8;
+    --gold:#c99a3c;
+    --gold-soft:#e8cf95;
+    --clay:#8b5e3c;
+    --red:#a13d3d;
+    --line:#dfd6bd;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--wheat);
+    color:var(--ink);
+    font-family:'Hind Siliguri', sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3,.brand{ font-family:'Noto Serif Bengali', serif; }
+
+  /* ---- Layout shell ---- */
+  .shell{ display:flex; min-height:100vh; }
+  .sidebar{
+    width:230px; background:var(--forest); color:var(--wheat);
+    padding:24px 14px; display:flex; flex-direction:column; gap:4px;
+    position:sticky; top:0; height:100vh;
+  }
+  .brand{
+    font-size:1.15rem; font-weight:700; color:#fff; margin:0 6px 22px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .brand .dot{ width:10px; height:10px; border-radius:50%; background:var(--gold); display:inline-block; }
+  .nav-item{
+    display:flex; align-items:center; gap:10px;
+    padding:11px 12px; border-radius:10px; cursor:pointer;
+    color:var(--wheat-soft); font-weight:600; font-size:0.95rem;
+    border:1px solid transparent;
+  }
+  .nav-item .num{
+    font-family:'Noto Serif Bengali',serif; font-size:0.78rem; color:var(--gold-soft);
+    width:20px;
+  }
+  .nav-item:hover{ background:rgba(255,255,255,0.06); }
+  .nav-item.active{ background:var(--forest-dark); color:#fff; border-color:rgba(201,154,60,0.4); }
+
+  .main{ flex:1; padding:32px 40px 90px; max-width:920px; }
+  .page-title{ margin:0 0 4px; font-size:1.6rem; color:var(--forest-dark); }
+  .page-sub{ margin:0 0 26px; color:#5b5540; font-size:0.92rem; }
+
+  .card{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:24px 26px; margin-bottom:20px; box-shadow:0 1px 2px rgba(34,48,28,0.04);
+  }
+  .card h3{ margin:0 0 16px; font-size:1.05rem; color:var(--forest-dark); }
+
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .field{ display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+  .field.full{ grid-column:1 / -1; }
+  label{ font-size:0.85rem; font-weight:600; color:var(--clay); }
+  input, select, textarea{
+    font-family:inherit; font-size:0.97rem; padding:10px 12px;
+    border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink);
+  }
+  input:focus, select:focus, textarea:focus{
+    outline:2px solid var(--gold-soft); outline-offset:1px; border-color:var(--gold);
+  }
+  textarea{ resize:vertical; min-height:60px; }
+
+  .btn{
+    font-family:inherit; font-weight:700; font-size:0.95rem;
+    background:var(--forest); color:#fff; border:none; border-radius:9px;
+    padding:11px 22px; cursor:pointer;
+  }
+  .btn:hover{ background:var(--forest-dark); }
+  .btn:disabled{ opacity:0.6; cursor:progress; }
+  .btn.secondary{ background:transparent; color:var(--forest); border:1px solid var(--forest); }
+
+  .msg{ margin-top:12px; font-size:0.9rem; font-weight:600; padding:9px 12px; border-radius:8px; display:none; }
+  .msg.ok{ background:#e5f0e0; color:var(--forest-dark); display:block; }
+  .msg.err{ background:#f6e3e3; color:var(--red); display:block; }
+
+  .subtabs{ display:flex; gap:8px; margin-bottom:18px; }
+  .subtab{
+    padding:8px 16px; border-radius:20px; border:1px solid var(--line);
+    background:#fff; cursor:pointer; font-weight:600; font-size:0.88rem; color:#5b5540;
+  }
+  .subtab.active{ background:var(--gold); border-color:var(--gold); color:#fff; }
+
+  .section{ display:none; }
+  .section.active{ display:block; }
+
+  /* ---- Dashboard ---- */
+  .stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
+  .stat{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px; position:relative; overflow:hidden;
+  }
+  .stat::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--gold); }
+  .stat .label{ font-size:0.8rem; color:var(--clay); font-weight:600; }
+  .stat .value{ font-family:'Noto Serif Bengali',serif; font-size:1.55rem; color:var(--forest-dark); margin-top:4px; }
+  .stat.profit .value{ color:var(--forest); }
+  .stat.loss .value{ color:var(--red); }
+
+  .bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:0.88rem; }
+  .bar-row .name{ width:170px; flex-shrink:0; color:#5b5540; }
+  .bar-track{ flex:1; height:9px; background:var(--wheat-soft); border-radius:5px; overflow:hidden; }
+  .bar-fill{ height:100%; background:var(--gold); }
+  .bar-row .amt{ width:90px; text-align:right; font-weight:600; color:var(--forest-dark); }
+
+  .active-list{ display:flex; flex-direction:column; gap:8px; }
+  .active-item{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 12px; background:var(--wheat-soft); border-radius:8px; font-size:0.88rem;
+  }
+  .empty{ color:#8a836a; font-size:0.88rem; font-style:italic; }
+
+  /* ---- Config banner ---- */
+  .config-warn{
+    background:#f6e3e3; border:1px solid #e0b3b3; color:var(--red);
+    padding:12px 16px; border-radius:10px; font-size:0.86rem; margin-bottom:20px;
+  }
+
+  /* ---- Mobile ---- */
+  .topbar{ display:none; }
+  @media (max-width:840px){
+    .shell{ flex-direction:column; }
+    .sidebar{ display:none; }
+    .topbar{
+      display:flex; overflow-x:auto; gap:6px; background:var(--forest);
+      padding:14px 12px; position:sticky; top:0; z-index:10;
+    }
+    .topbar .nav-item{ white-space:nowrap; }
+    .main{ padding:20px 16px 60px; }
+    .grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- Desktop sidebar -->
+  <nav class="sidebar" id="sidebarNav">
+    <div class="brand"><span class="dot"></span>খামার হিসাব</div>
+    <div class="nav-item active" data-page="expense"><span class="num">০১</span>ব্যয় এন্ট্রি</div>
+    <div class="nav-item" data-page="income"><span class="num">০২</span>আয় এন্ট্রি</div>
+    <div class="nav-item" data-page="medicine"><span class="num">০৩</span>মেডিসিন কোর্স</div>
+    <div class="nav-item" data-page="breeding"><span class="num">০৪</span>ব্রিডিং হিস্ট্রি</div>
+    <div class="nav-item" data-page="dashboard"><span class="num">০৫</span>ড্যাশবোর্ড</div>
+  </nav>
+
+  <!-- Mobile top tab bar -->
+  <nav class="topbar" id="topbarNav">
+    <div class="nav-item active" data-page="expense">ব্যয়</div>
+    <div class="nav-item" data-page="income">আয়</div>
+    <div class="nav-item" data-page="medicine">মেডিসিন</div>
+    <div class="nav-item" data-page="breeding">ব্রিডিং</div>
+    <div class="nav-item" data-page="dashboard">ড্যাশবোর্ড</div>
+  </nav>
+
+  <main class="main">
+    <div id="configWarn" class="config-warn" style="display:none;">
+      ⚠️ এখনো Apps Script URL সেট করা হয়নি। index.html ফাইলের একদম শুরুতে
+      <code>CONFIG.APPS_SCRIPT_URL</code> এ আপনার ডিপ্লয়কৃত ওয়েব অ্যাপ URL বসান।
+    </div>
+
+    <!-- ============ ব্যয় এন্ট্রি ============ -->
+    <section class="section active" id="page-expense">
+      <h1 class="page-title">ব্যয় এন্ট্রি</h1>
+      <p class="page-sub">প্রতিটি ব্যয়ের ধরন অনুযায়ী আলাদা শিটে যুক্ত হবে।</p>
+      <div class="card">
+        <form id="expenseForm">
+          <div class="grid">
+            <div class="field">
+              <label>ব্যয়ের ধরন</label>
+              <select name="category" required>
+                <option value="farm_setup">ফার্ম স্থাপনা খরচ</option>
+                <option value="monthly_feed">মাসিক খাবার খরচ</option>
+                <option value="daily_feed">দৈনিক খাবার খরচ</option>
+                <option value="medicine_cost">মেডিসিন খরচ</option>
+                <option value="other">অন্যান্য আনুসাঙ্গিক খরচ</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>তারিখ</label>
+              <input type="date" name="date" required>
+            </div>
+            <div class="field full">
+              <label>বিবরণ</label>
+              <input type="text" name="description" placeholder="যেমন: লেয়ার ফিড, খাঁচা মেরামত..." required>
+            </div>
+            <div class="field">
+              <label>পরিমাণ</label>
+              <input type="number" step="any" name="quantity" placeholder="যেমন: ৫০" required>
+            </div>
+            <div class="field">
+              <label>একক</label>
+              <select name="unit" required>
+                <option value="কেজি">কেজি</option>
+                <option value="গ্রাম">গ্রাম</option>
+                <option value="পিস">পিস</option>
+                <option value="সেট">সেট</option>
+                <option value="বোতল">বোতল</option>
+                <option value="লিটার">লিটার</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>মূল্য (টাকা)</label>
+              <input type="number" step="any" name="amount" required>
+            </div>
+            <div class="field full">
+              <label>মন্তব্য (ঐচ্ছিক)</label>
+              <textarea name="remarks"></textarea>
+            </div>
+          </div>
+          <button class="btn" type="submit">ব্যয় যুক্ত করুন</button>
+          <div class="msg" id="expenseMsg"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ আয় এন্ট্রি ============ -->
+    <section class="section" id="page-income">
+      <h1 class="page-title">আয় এন্ট্রি</h1>
+      <p class="page-sub">পাখি বিক্রয়ের তথ্য "আয়" শিটে যুক্ত হবে।</p>
+      <div class="card">
+        <form id="incomeForm">
+          <div class="grid">
+            <div class="field">
+              <label>বিক্রয়কৃত পাখির রিং নং</label>
+              <input type="text" name="ringNo" required>
+            </div>
+            <div class="field">
+              <label>বিক্রয় তারিখ</label>
+              <input type="date" name="saleDate" required>
+            </div>
+            <div class="field">
+              <label>বিক্রয় পরিমাণ</label>
+              <input type="number" step="any" name="quantity" required>
+            </div>
+            <div class="field">
+              <label>একক</label>
+              <select name="unit" required>
+                <option value="পিস">পিস</option>
+                <option value="জোড়া">জোড়া</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>কেজ নং</label>
+              <input type="text" name="cageNo">
+            </div>
+            <div class="field">
+              <label>বিক্রয়কৃত মূল্য (টাকা)</label>
+              <input type="number" step="any" name="price" required>
+            </div>
+            <div class="field full">
+              <label>মন্তব্য (ঐচ্ছিক)</label>
+              <textarea name="remarks"></textarea>
+            </div>
+          </div>
+          <button class="btn" type="submit">আয় যুক্ত করুন</button>
+          <div class="msg" id="incomeMsg"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ মেডিসিন কোর্স ============ -->
+    <section class="section" id="page-medicine">
+      <h1 class="page-title">মেডিসিন কোর্স</h1>
+      <p class="page-sub">কোর্স শুরু করার সময় একটি ফর্ম, আর শেষ হলে সেই একই এন্ট্রিতে শেষ তারিখ যুক্ত করার জন্য আলাদা ফর্ম।</p>
+
+      <div class="subtabs">
+        <div class="subtab active" data-sub="start">কোর্স শুরু</div>
+        <div class="subtab" data-sub="end">কোর্স শেষ</div>
+      </div>
+
+      <div class="card" id="medStartCard">
+        <form id="medStartForm">
+          <div class="grid">
+            <div class="field">
+              <label>পাখির নাম/রিং নং</label>
+              <input type="text" name="birdName" required>
+            </div>
+            <div class="field">
+              <label>মেডিসিনের নাম</label>
+              <input type="text" name="medicineName" required>
+            </div>
+            <div class="field">
+              <label>শুরুর তারিখ</label>
+              <input type="date" name="startDate" required>
+            </div>
+            <div class="field">
+              <label>মন্তব্য (ঐচ্ছিক)</label>
+              <input type="text" name="remarks">
+            </div>
+          </div>
+          <button class="btn" type="submit">কোর্স শুরু নথিভুক্ত করুন</button>
+          <div class="msg" id="medStartMsg"></div>
+        </form>
+      </div>
+
+      <div class="card" id="medEndCard" style="display:none;">
+        <form id="medEndForm">
+          <div class="field full">
+            <label>চলমান কোর্স বাছাই করুন</label>
+            <select name="rowIndex" id="activeCourseSelect" required>
+              <option value="">লোড হচ্ছে...</option>
+            </select>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label>শেষের তারিখ</label>
+              <input type="date" name="endDate" required>
+            </div>
+            <div class="field">
+              <label>মন্তব্য (ঐচ্ছিক)</label>
+              <input type="text" name="remarks">
+            </div>
+          </div>
+          <button class="btn" type="submit">কোর্স শেষ নথিভুক্ত করুন</button>
+          <button class="btn secondary" type="button" id="refreshCourses" style="margin-left:8px;">তালিকা রিফ্রেশ</button>
+          <div class="msg" id="medEndMsg"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ ব্রিডিং হিস্ট্রি ============ -->
+    <section class="section" id="page-breeding">
+      <h1 class="page-title">ব্রিডিং হিস্ট্রি</h1>
+      <p class="page-sub">একটি পাখির ব্রিডিং সংক্রান্ত ধাপগুলো একসাথে বা যতটুকু জানা আছে ততটুকু দিয়ে নথিভুক্ত করুন।</p>
+      <div class="card">
+        <form id="breedingForm">
+          <div class="grid">
+            <div class="field full">
+              <label>পাখির নাম/রিং নং</label>
+              <input type="text" name="birdName" required>
+            </div>
+            <div class="field">
+              <label>বক্স লাগানোর তারিখ</label>
+              <input type="date" name="boxDate">
+            </div>
+            <div class="field">
+              <label>১ম ডিম দেয়ার তারিখ</label>
+              <input type="date" name="firstEggDate">
+            </div>
+            <div class="field">
+              <label>বাচ্চা ফোটার তারিখ</label>
+              <input type="date" name="hatchDate">
+            </div>
+            <div class="field full">
+              <label>মন্তব্য (ঐচ্ছিক)</label>
+              <textarea name="remarks"></textarea>
+            </div>
+          </div>
+          <button class="btn" type="submit">এন্ট্রি যুক্ত করুন</button>
+          <div class="msg" id="breedingMsg"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ ড্যাশবোর্ড ============ -->
+    <section class="section" id="page-dashboard">
+      <h1 class="page-title">ড্যাশবোর্ড</h1>
+      <p class="page-sub">সার্বিক সারসংক্ষেপ — সরাসরি Google Sheet থেকে হিসাব করা।</p>
+      <div id="dashLoading" class="empty">তথ্য লোড হচ্ছে...</div>
+      <div id="dashContent" style="display:none;">
+        <div class="stat-grid">
+          <div class="stat"><div class="label">মোট আয়</div><div class="value" id="dTotalIncome">৳০</div></div>
+          <div class="stat"><div class="label">মোট ব্যয়</div><div class="value" id="dTotalExpense">৳০</div></div>
+          <div class="stat" id="dProfitCard"><div class="label">নীট লাভ/ক্ষতি</div><div class="value" id="dProfit">৳০</div></div>
+          <div class="stat"><div class="label">মোট বিক্রীত পাখি</div><div class="value" id="dBirdsSold">০</div></div>
+        </div>
+        <div class="card">
+          <h3>ব্যয়ের ধরন অনুযায়ী বিভাজন</h3>
+          <div id="dExpenseBars"></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><div class="label">চলমান মেডিসিন কোর্স</div><div class="value" id="dActiveMed">০</div></div>
+          <div class="stat"><div class="label">মোট মেডিসিন কোর্স</div><div class="value" id="dTotalMed">০</div></div>
+          <div class="stat"><div class="label">মোট ব্রিডিং এন্ট্রি</div><div class="value" id="dTotalBreed">০</div></div>
+          <div class="stat"><div class="label">বাচ্চা ফোটা সম্পন্ন</div><div class="value" id="dHatched">০</div></div>
+        </div>
+      </div>
+      <button class="btn secondary" id="refreshDash">রিফ্রেশ করুন</button>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ======= এখানে আপনার Apps Script Web App URL বসান ======= */
+const CONFIG = {
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyjVIHrU-OLwWYOY9gGs1OBM3QEb2vE36zKW5xtUFxCjQoqKnV-pJXCECC7n5K9eeePIA/exec'
+};
+
+const isConfigured = () => CONFIG.APPS_SCRIPT_URL && CONFIG.APPS_SCRIPT_URL.startsWith('http');
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!isConfigured()) document.getElementById('configWarn').style.display = 'block';
+});
+
+// ---------- নেভিগেশন ----------
+function switchPage(page){
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'medicine') loadActiveCourses();
+}
+document.querySelectorAll('#sidebarNav .nav-item, #topbarNav .nav-item').forEach(el => {
+  el.addEventListener('click', () => switchPage(el.dataset.page));
+});
+
+document.querySelectorAll('.subtab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.subtab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const isStart = tab.dataset.sub === 'start';
+    document.getElementById('medStartCard').style.display = isStart ? 'block' : 'none';
+    document.getElementById('medEndCard').style.display = isStart ? 'none' : 'block';
+    if (!isStart) loadActiveCourses();
+  });
+});
+
+// ---------- API সহায়ক ----------
+async function postData(payload){
+  const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+async function getData(action){
+  const res = await fetch(CONFIG.APPS_SCRIPT_URL + '?action=' + action);
+  return res.json();
+}
+function showMsg(id, ok, text){
+  const el = document.getElementById(id);
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+  el.textContent = text;
+}
+function formToObj(form){
+  const fd = new FormData(form);
+  const obj = {};
+  fd.forEach((v,k) => obj[k] = v);
+  return obj;
+}
+
+// ---------- ব্যয় ফর্ম ----------
+document.getElementById('expenseForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!isConfigured()) return showMsg('expenseMsg', false, 'প্রথমে Apps Script URL সেট করুন।');
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  try{
+    const data = formToObj(e.target);
+    data.type = 'expense';
+    const res = await postData(data);
+    if (res.status === 'success'){
+      showMsg('expenseMsg', true, 'যুক্ত হয়েছে — ক্রমিক নং ' + res.data.serial + ' (' + res.data.sheet + ')');
+      e.target.reset();
+    } else showMsg('expenseMsg', false, res.message);
+  }catch(err){ showMsg('expenseMsg', false, 'সংযোগ ত্রুটি: ' + err.message); }
+  btn.disabled = false;
+});
+
+// ---------- আয় ফর্ম ----------
+document.getElementById('incomeForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!isConfigured()) return showMsg('incomeMsg', false, 'প্রথমে Apps Script URL সেট করুন।');
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  try{
+    const data = formToObj(e.target);
+    data.type = 'income';
+    const res = await postData(data);
+    if (res.status === 'success'){
+      showMsg('incomeMsg', true, 'যুক্ত হয়েছে — ক্রমিক নং ' + res.data.serial);
+      e.target.reset();
+    } else showMsg('incomeMsg', false, res.message);
+  }catch(err){ showMsg('incomeMsg', false, 'সংযোগ ত্রুটি: ' + err.message); }
+  btn.disabled = false;
+});
+
+// ---------- মেডিসিন শুরু ----------
+document.getElementById('medStartForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!isConfigured()) return showMsg('medStartMsg', false, 'প্রথমে Apps Script URL সেট করুন।');
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  try{
+    const data = formToObj(e.target);
+    data.type = 'medicine_start';
+    const res = await postData(data);
+    if (res.status === 'success'){
+      showMsg('medStartMsg', true, 'কোর্স শুরু নথিভুক্ত হয়েছে — ক্রমিক নং ' + res.data.serial);
+      e.target.reset();
+    } else showMsg('medStartMsg', false, res.message);
+  }catch(err){ showMsg('medStartMsg', false, 'সংযোগ ত্রুটি: ' + err.message); }
+  btn.disabled = false;
+});
+
+// ---------- মেডিসিন শেষ ----------
+async function loadActiveCourses(){
+  const sel = document.getElementById('activeCourseSelect');
+  if (!isConfigured()) { sel.innerHTML = '<option value="">Apps Script URL সেট করুন</option>'; return; }
+  sel.innerHTML = '<option value="">লোড হচ্ছে...</option>';
+  try{
+    const res = await getData('activeMedicine');
+    if (res.status !== 'success') throw new Error(res.message);
+    if (!res.data.length){ sel.innerHTML = '<option value="">কোনো চলমান কোর্স নেই</option>'; return; }
+    sel.innerHTML = res.data.map(c =>
+      `<option value="${c.rowIndex}">#${c.serial} — ${c.birdName} — ${c.medicineName} (শুরু: ${c.startDate})</option>`
+    ).join('');
+  }catch(err){ sel.innerHTML = '<option value="">লোড ব্যর্থ: ' + err.message + '</option>'; }
+}
+document.getElementById('refreshCourses').addEventListener('click', loadActiveCourses);
+
+document.getElementById('medEndForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!isConfigured()) return showMsg('medEndMsg', false, 'প্রথমে Apps Script URL সেট করুন।');
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true;
+  try{
+    const data = formToObj(e.target);
+    data.type = 'medicine_end';
+    const res = await postData(data);
+    if (res.status === 'success'){
+      showMsg('medEndMsg', true, 'কোর্স শেষ নথিভুক্ত হয়েছে।');
+      e.target.reset();
+      loadActiveCourses();
+    } else showMsg('medEndMsg', false, res.message);
+  }catch(err){ showMsg('medEndMsg', false, 'সংযোগ ত্রুটি: ' + err.message); }
+  btn.disabled = false;
+});
+
+// ---------- ব্রিডিং ফর্ম ----------
+document.getElementById('breedingForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!isConfigured()) return showMsg('breedingMsg', false, 'প্রথমে Apps Script URL সেট করুন।');
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  try{
+    const data = formToObj(e.target);
+    data.type = 'breeding';
+    const res = await postData(data);
+    if (res.status === 'success'){
+      showMsg('breedingMsg', true, 'যুক্ত হয়েছে — ক্রমিক নং ' + res.data.serial);
+      e.target.reset();
+    } else showMsg('breedingMsg', false, res.message);
+  }catch(err){ showMsg('breedingMsg', false, 'সংযোগ ত্রুটি: ' + err.message); }
+  btn.disabled = false;
+});
+
+// ---------- ড্যাশবোর্ড ----------
+function taka(n){ return '৳' + Number(n || 0).toLocaleString('en-US'); }
+
+async function loadDashboard(){
+  if (!isConfigured()) return;
+  document.getElementById('dashLoading').style.display = 'block';
+  document.getElementById('dashContent').style.display = 'none';
+  try{
+    const res = await getData('dashboard');
+    if (res.status !== 'success') throw new Error(res.message);
+    const d = res.data;
+    document.getElementById('dTotalIncome').textContent = taka(d.totalIncome);
+    document.getElementById('dTotalExpense').textContent = taka(d.totalExpense);
+    document.getElementById('dProfit').textContent = taka(d.profit);
+    document.getElementById('dProfitCard').className = 'stat ' + (d.profit >= 0 ? 'profit' : 'loss');
+    document.getElementById('dBirdsSold').textContent = d.totalBirdsSold;
+    document.getElementById('dActiveMed').textContent = d.activeMedicineCount;
+    document.getElementById('dTotalMed').textContent = d.totalMedicineCourses;
+    document.getElementById('dTotalBreed').textContent = d.totalBreedingEntries;
+    document.getElementById('dHatched').textContent = d.totalHatched;
+
+    const max = Math.max(1, ...Object.values(d.expenseByCategory));
+    const barsEl = document.getElementById('dExpenseBars');
+    barsEl.innerHTML = Object.entries(d.expenseByCategory).map(([name, amt]) => `
+      <div class="bar-row">
+        <div class="name">${name}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(amt/max*100).toFixed(1)}%"></div></div>
+        <div class="amt">${taka(amt)}</div>
+      </div>
+    `).join('');
+
+    document.getElementById('dashLoading').style.display = 'none';
+    document.getElementById('dashContent').style.display = 'block';
+  }catch(err){
+    document.getElementById('dashLoading').textContent = 'লোড ব্যর্থ: ' + err.message;
+  }
+}
+document.getElementById('refreshDash').addEventListener('click', loadDashboard);
+</script>
+</body>
+</html>
